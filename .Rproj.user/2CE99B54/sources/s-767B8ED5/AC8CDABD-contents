@@ -1,0 +1,2 @@
+df_data <- fread("data\\retail txns data.csv")
+df_data <- fread("data/ecommData_rfm_clv.csv")

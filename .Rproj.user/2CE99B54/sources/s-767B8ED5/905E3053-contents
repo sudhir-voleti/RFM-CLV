@@ -1,0 +1,29 @@
+## RFM builder func
+get_rfm_df <- function(custID_ui=custID_ui, txnID_ui = txnID_ui,
+                       txn_amount=txn_amount_ui, txn_date_ui = txn_date_ui,
+                       rfm_bins_num=rfm_bins_num){
+  
+  df1 = data.frame(custID_ui=custID_ui, txnID_ui = txnID_ui,
+                   txn_amount=txn_amount_ui, txn_date_ui = txn_date_ui)
+  
+  ## RFM calc
+  df_RFM <- df1 %>% 
+    group_by(custID_ui) %>% # all stuff below is by cust_ID
+    
+    summarise(
+      recency = as.numeric(max(df1$txn_date_ui) - max(txn_date_ui)),
+      freq = n_distinct(txnID_ui), 
+      monetary= sum(txn_amount)/n_distinct(txnID_ui)) %>% # 12.5s 
+    # summary(df_RFM)
+    rfm_table_customer(.,
+                       customer_id = custID_ui,
+                       n_transactions = freq, 
+                       recency_days = recency,
+                       total_revenue = monetary, 
+                       recency_bins=rfm_bins_num, 
+                       frequency_bins = rfm_bins_num, 
+                       monetary_bins = rfm_bins_num)
+  
+  df0_rfm = df_RFM$rfm
+  return(df0_rfm)
+} # func ends

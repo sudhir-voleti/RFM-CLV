@@ -1,0 +1,236 @@
+---
+title: "RFM and CLV Shiny App funcs"
+output:
+  html_document:
+    df_print: paged
+---
+
+For Lec04, Unsupervised Learning, this below is 1 of 3 planned apps. The other 2 being 
+
+* a basic PCA app
+* a recommendation systems app (extended to accept longform DF inputs)
+
+## Basic Idea of RFM-CLV app
+
+We read in a long-form DF that should contain at a minimum these 4 fields:
+
+* a `customerID` column
+* a `txn_ID` column such as Invoice number etc.
+* a `txn_amount` column, and
+* a `txn_date` column convertible to `as.Date(YY-MM-DD)`
+
+Other variables can be around but won't matter as much. User will select those 3 variables via drop-downs in UI.
+
+Then I use the `rfm` package to build a RFM data frame from long-form.
+
+Now, to get CLV for each custID from the RFM wala DF, I need the following quantities:
+
+* avg store `gross_margin` (UI default=10% or 0.1, & slider from 0.01 to 0.99)
+* `discount_rate` (from UI, default=0.1 but slider goes from 0.1 to 0.50)
+* `retention_rate` (calculated as below)
+* a `churn_threshold` as percentile of days_since_last_visit (from UI, default=0.75)
+
+To get retention_rate per cust_ID as a probability, I use logit from `stats::glm()`. The DV is a binary class (Y = churned or not) and the IVs are F and M from RFM.
+
+Then, I plug the retention_rate into the following, [overly] simple infinite-horizon wala CLV formula and we're on:
+
+* CLV  = Tot_rev_it * gross_margin * (ret_rate_it/(1 + discount_rate - ret_rate_it))
+
+for custID indexed by i and t indexing last period (it uniquely IDs each row).
+
+## Basic App UI design
+
+Need the following Input fields on the main page:
+
+* file input for txns file
+* drop-down variables list for selecting CustID colm
+* drop-down variables list for selecting txnID colm
+* drop-down variables list for selecting txn_date colm
+* drop-down variables list for selecting txn_amount colm
+
+And output tabs could be:
+
+* Intro and Overview
+* Data summary tab with top 10 HTML tbl rows, DF size, missingness tbl
+* RFM tab where we show `df0_rfm` top 10 rows and allow download
+* CLV tab where we show `df1` top 10 rows and allow full DF download
+
+On CLV output tab, we can collect more UI inputs, namely:
+
+* churn_thresh_ui = 0.75  (default. slider from 0.5 to 0.99)
+* discount_rate_ui = 0.1  (default, UI slider from 0.01 to 0.20)
+* profit_margin_ui = 0.1  (default, else numeric input field)
+
+
+## Setup chunk
+
+```{r setup_load}
+
+suppressPackageStartupMessages({
+  if (!require('data.table')){install.packages("data.table")}; library("data.table")
+  if (!require('tidyverse')){install.packages("tidyverse")}; library("tidyverse")
+  if (!require('rfm')){install.packages("rfm")}; library("rfm")
+  if (!require('stats')){install.packages("stats")}; library("stats")
+})
+
+# Load data
+path0 = "D:/Dropbox/teaching related/MLBM/Co 2021/Lec04 Unsupervised Learning/"
+df_data <- fread(paste0(path0, "ecommData_rfm_clv.csv"))
+head(df_data)
+
+```
+
+Now, let me collect all UI inputs required from user at one place below.
+
+```{r all_UI}
+
+## UI inputs for RFM
+custID_ui = as.factor(df_data$CustomerID)  # from UI, make `as.factor()`
+
+txnID_ui = as.factor(df_data$InvoiceNo)  # from UI, make `as.factor()`
+
+txn_amount_ui = as.numeric(df_data$totRev)  # from UI, make `as.numeric()`
+
+date_format = "%m/%d/%Y %H:%M" # from UI. Tough but will ask folks do this. 
+
+txn_date_ui = as.Date(df_data$InvoiceDate, date_format)
+
+rfm_bins_num = 4 # from UI. Drop-down from 3 to 8
+
+
+
+
+# UI inputs for CLV
+churn_thresh_ui = 0.75  # default. slider from 0.5 to 0.99
+
+discount_rate_ui = 0.1  # default, UI slider from 0.01 to 0.20
+
+profit_margin_ui = 0.1 # default, else numeric input field
+
+```
+
+## Build RFM wala DF
+
+Here, we cobble together user inputs from UI and build our main RFM wala DF.
+
+I write a func that will do it in one go. behold.
+
+```{r make_df_rfm}
+
+## RFM builder func
+get_rfm_df <- function(custID_ui=custID_ui, txnID_ui = txnID_ui,
+                 txn_amount=txn_amount_ui, txn_date_ui = txn_date_ui,
+		              rfm_bins_num=rfm_bins_num){
+  
+  df1 = data.frame(custID_ui=custID_ui, txnID_ui = txnID_ui,
+                 txn_amount=txn_amount_ui, txn_date_ui = txn_date_ui)
+
+  ## RFM calc
+  df_RFM <- df1 %>% 
+    group_by(custID_ui) %>% # all stuff below is by cust_ID
+  
+    summarise(
+      recency = as.numeric(max(df1$txn_date_ui) - max(txn_date_ui)),
+      freq = n_distinct(txnID_ui), 
+      monetary= sum(txn_amount)/n_distinct(txnID_ui)) %>% # 12.5s 
+  	# summary(df_RFM)
+  	rfm_table_customer(.,
+                           customer_id = custID_ui,
+                           n_transactions = freq, 
+                           recency_days = recency,
+                           total_revenue = monetary, 
+                           recency_bins=rfm_bins_num, 
+                           frequency_bins = rfm_bins_num, 
+                           monetary_bins = rfm_bins_num)
+  
+  df0_rfm = df_RFM$rfm
+  return(df0_rfm)
+	} # func ends
+
+```
+
+## Onto CLV analysis
+
+Our Core CLV formula is: 
+
+`CLV_it = (totRev_it * Profit_margin%_ui)*[r_it/(1+d_ui - r_it)]`
+
+where `r_it` = retention rate = estimated from glm::logreg
+
+`Pr(Y_it = 0 | X_it) = logit(X_it*beta)` for `X_it = {R_it, F_it, M_it}`
+
+and `Y_it = 0` for `R_it >= some_thresh_ui`
+
+Using UI based inputs from chunk above, I now proceed to build the binary DV (Y = churned or not) and thereafter, the analysis DF. 
+
+Behold.
+
+```{r clv_calc_func}
+
+## CLV calc func
+calc_clv <- function(data,
+                     churn_thresh_ui = 0.75,
+                     discount_rate_ui=0.10, 
+                     profit_margin_ui=0.10){
+
+  y = rep(0, nrow(data)); y[1:4]
+    a0 = data$recency_days %>% quantile(., probs = churn_thresh_ui); #a0
+    a1 = (data$recency_days >= a0); #a1[1:4]
+    y[a1] = 1; #y[1:8]
+  
+  df0 = data.frame(y=y, 
+                       recency0 = data$recency_days,
+                       freq0 = data$transaction_count,
+                       monetary0 = data$amount,
+                       Rscore = data$recency_score,
+                       Fscore=data$frequency_score,
+                       Mscore = data$monetary_score)
+
+  mylogit <- glm(y ~ freq0 + monetary0 + factor(Fscore) + factor(Mscore), 
+                 data = df0, family = "binomial")  # 0.2s!
+
+  summary(mylogit) # can display if needed
+
+  a2 = mylogit$fitted.values
+  ret_rate = 1 - a2; # ret_rate[1:8]
+  
+  A = ret_rate / (1 + discount_rate_ui - ret_rate); #A[1:8]
+  clv = df0$monetary0 * profit_margin_ui * A; #clv[1:8]
+  
+  df1 = data.frame(df0, CLV=clv); print(head(df1))
+  
+  return(df1) # main output DF for CLV
+  	} # func ends
+
+```
+
+## Test-drive the funcs and examine outputs
+
+```{r test_drive}
+
+system.time({ 
+  
+  df0_rfm = get_rfm_df(custID_ui=custID_ui, 
+                       txnID_ui = txnID_ui,
+                       txn_amount=txn_amount_ui, 
+                       txn_date_ui = txn_date_ui,
+                       rfm_bins_num=rfm_bins_num)
+  
+  print(head(df0_rfm))
+  
+	df1 = calc_clv(df0_rfm, 
+	               churn_thresh_ui = churn_thresh_ui, 
+	               discount_rate_ui = discount_rate_ui, 
+	               profit_margin_ui = profit_margin_ui)
+	
+	print(head(df1))
+	
+	})
+```
+
+
+Dassit, we're done. Can make histograms etc for CLV thus obtained, if needed.
+
+Slightly involved app in that requires multiple UI inputs from user but what to do only. 
+
+Sudhir, June 2021.
