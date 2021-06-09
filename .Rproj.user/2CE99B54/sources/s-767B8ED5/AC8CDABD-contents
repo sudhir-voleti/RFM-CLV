@@ -35,3 +35,16 @@ system.time({
                        txn_date_ui = txn_date_ui,
                        rfm_bins_num=rfm_bins_num)
 })
+
+
+rfm_heatmap(df0_rfm)
+rfm_launch_app()
+
+
+
+
+
+
+
+
+

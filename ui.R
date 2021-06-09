@@ -18,6 +18,13 @@ shinyUI(fluidPage(
                   sliderInput("rfm_bin","RFM bin",min = 3,max = 8,value = 4,step = 1),
                   actionButton("cal_rfm","Calculate RFM")
         ),
+        conditionalPanel(condition = "input.tabselected==4",
+                         selectInput("pl_sel","Plot",choices = list("Recency, Frequency and Monetary (Histogram)"="hs",
+                                                                    "Recencey vs Monetary (Scatter)" = "rm",
+                                                                    "Frequency vs Monetary (Scatter)" = "fm",
+                                                                    "Recency vs Freq vs Monetary (Heat Map)" = "hm",
+                                                                    "Recency vs Freq vs Monetary (Bar Plot)" = "bp"))
+                         ),
         conditionalPanel(condition = "input.tabselected==3",
                    sliderInput("churn_thresh","Churn Threshold (ret_rate_it)",min = 0.5,max = 0.99,value = 0.75,step = 0.01),
                    sliderInput("dis_rate","Discount Rate (discount_rate in formula)",min=0.01,max=0.20,value = 0.1,step=0.01),
@@ -57,6 +64,20 @@ shinyUI(fluidPage(
                      
                      
             ),
+            tabPanel("Plots",value=4,
+                     h4("Exploratory Data Analysis of RFM Table"),
+                     #h3("Heat Map"),
+                     plotOutput("rfm_plot"),
+                    # hr(),
+                     #p("Same as above in bar chart"),
+                     #plotOutput("rfm_bar"),
+                     #hr(),
+                     #plotOutput("bi")
+                     
+                     
+                     
+                     
+                     ),
             tabPanel("CLV",value=3,
                      h4("CLV Formula"),
                      img(src = "clv1.png"),
@@ -73,6 +94,7 @@ shinyUI(fluidPage(
                      
                     
             ),
+            
             id = "tabselected"
         )
     )

@@ -24,8 +24,8 @@ get_rfm_df <- function(custID_ui=custID_ui, txnID_ui = txnID_ui,
                        frequency_bins = rfm_bins_num, 
                        monetary_bins = rfm_bins_num)
   
-  df0_rfm = df_RFM$rfm
-  return(df0_rfm)
+  #df0_rfm = df_RFM$rfm
+  return(df_RFM)
 } # func ends
 
 
@@ -41,6 +41,7 @@ calc_clv <- function(data,
   y[a1] = 1; #y[1:8]
   
   df0 = data.frame(y=y, 
+                   customer_id = data$customer_id,
                    R_value = data$recency_days,
                    F_value = data$transaction_count,
                    M_value = data$amount,

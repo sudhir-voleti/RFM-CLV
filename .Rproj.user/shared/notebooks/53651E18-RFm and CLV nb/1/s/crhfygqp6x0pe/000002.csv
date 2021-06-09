@@ -1,0 +1,18 @@
+"0",""
+"0","suppressPackageStartupMessages({"
+"0","  if (!require('data.table')){install.packages(""data.table"")}; library(""data.table"")"
+"0","  if (!require('tidyverse')){install.packages(""tidyverse"")}; library(""tidyverse"")"
+"0","  if (!require('rfm')){install.packages(""rfm"")}; library(""rfm"")"
+"0","  if (!require('stats')){install.packages(""stats"")}; library(""stats"")"
+"0","})"
+"0",""
+"0","# Load data"
+"0","path0 = ""D:/Dropbox/teaching related/MLBM/Co 2021/Lec04 Unsupervised Learning/"""
+"0","df_data <- fread(paste0(path0, ""ecommData_rfm_clv.csv""))"
+"2","Taking input= as a system command ('D:/Dropbox/teaching related/MLBM/Co 2021/Lec04 Unsupervised Learning/ecommData_rfm_clv.csv') and a variable has been used in the expression passed to `input=`. Please use fread(cmd=...). There is a security concern if you are creating an app, and the app could have a malicious user, and the app is not running in a secure environment; e.g. the app is running as root. Please read item 5 in the NEWS file for v1.11.6 for more information and for the option to suppress this message.
+"
+"1","The system cannot find the path specified.
+"
+"2","'(D:/Dropbox/teaching related/MLBM/Co 2021/Lec04 Unsupervised Learning/ecommData_rfm_clv.csv) > C:\Users\31202\AppData\Local\Temp\RtmpCCZd4i\file34584ad1f56' execution failed with error code 1"
+"2","File 'C:\Users\31202\AppData\Local\Temp\RtmpCCZd4i\file34584ad1f56' has size 0. Returning a NULL data.table."
+"0","head(df_data)"

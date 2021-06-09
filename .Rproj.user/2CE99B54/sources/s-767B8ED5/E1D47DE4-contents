@@ -106,12 +106,12 @@ shinyServer(function(input, output,session) {
   
   output$rfm_df <- renderDataTable({
     req(input$file)
-    rfm_df()
+    rfm_df()$rfm
   })
   
   output$rfm_dim <- renderText({
     req(input$file)
-    size <- dim(rfm_df())  
+    size <- dim(rfm_df()$rfm)  
     paste0("Dimensions of RFM Scores table are ",size[1]," (rows) "," X ",size[2]," (columns)")
   
   })
@@ -119,15 +119,40 @@ shinyServer(function(input, output,session) {
   output$rfm_dwnld <- downloadHandler(
     filename = function() { paste(str_split(input$file$name,"\\.")[[1]][1],"_rfm_score.csv",collapse = " ") },
     content = function(file) {
-      write.csv(rfm_df(), file,row.names=FALSE)
+      write.csv(rfm_df()$rfm, file,row.names=FALSE)
     }
   )
+  
+  #-- Plots tab---#
+  output$rfm_plot <- renderPlot({
+    req(input$file)
+    rfm_result <- rfm_df()
+    
+    if(input$pl_sel == "hs"){
+      rfm_histograms(rfm_result) 
+    }
+    if(input$pl_sel == "rm"){
+      rfm_rm_plot(rfm_result) 
+    }
+    if(input$pl_sel == "fm"){
+      rfm_fm_plot(rfm_result) 
+    }
+    if(input$pl_sel == "hm"){
+      rfm_heatmap(rfm_result) 
+    }
+    if(input$pl_sel == "bp"){
+      rfm_bar_chart(rfm_result) 
+    }
+    
+    
+  })
+  
 
   #---CLV Tab---#
   
   clv_df <- eventReactive(input$cal_clv,{
     
-    df0_rfm <- rfm_df()
+    df0_rfm <- rfm_df()$rfm
     clv_df <- calc_clv(df0_rfm,
                        churn_thresh_ui = input$churn_thresh, 
                        discount_rate_ui = input$dis_rate, 

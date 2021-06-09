@@ -1,0 +1,6 @@
+"0","	df1 = calc_clv(df0_rfm$rfm, 
+	               churn_thresh_ui = churn_thresh_ui, 
+	               discount_rate_ui = discount_rate_ui, 
+	               profit_margin_ui = profit_margin_ui)
+"
+"2","glm.fit: fitted probabilities numerically 0 or 1 occurred"
