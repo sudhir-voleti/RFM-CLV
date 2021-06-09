@@ -124,6 +124,36 @@ shinyServer(function(input, output,session) {
   )
   
   #-- Plots tab---#
+  output$clv_sum <- renderPrint({
+    summary(clv_df()$CLV)
+  })
+  output$fac_plot_ui <- renderUI({
+    if(input$fac){
+      selectInput('fac_ip',"Select Group By Variable",
+                  choices = list("R_Score" = "R_Score",
+                                 "F_Score" = "F_Score",
+                                 "M_Score" = "M_Score"),selected = "R_Score")
+    }else{
+      NULL
+    }
+  })
+  
+  output$clv_plot <- renderPlot({
+    req(input$file)
+    df1 <- clv_df()
+    if(input$fac){
+        df1[,input$fac_ip] <- as.factor(df1[,input$fac_ip])
+        ggplot(df1, aes(x = CLV)) +
+        geom_histogram(fill = "darkblue", colour = "darkblue",bins = input$d_bin) +
+        facet_grid(~get(input$fac_ip) ~ ., scales = "free")+ggtitle(paste0("Distribution of CLV grouped by ", input$fac_ip))
+    }else{
+      ggplot(df1, aes(x = CLV)) +
+        geom_histogram(fill = "darkblue", colour = "darkblue",bins = input$d_bin) +
+        ggtitle("")
+    }
+  })
+  
+  
   output$rfm_plot <- renderPlot({
     req(input$file)
     rfm_result <- rfm_df()
@@ -147,7 +177,11 @@ shinyServer(function(input, output,session) {
     
   })
   
-
+  output$sum_ht <- renderText({
+    summary(rfm_df()$rfm) %>% 
+           kable() %>% 
+           kable_minimal()
+  })
   #---CLV Tab---#
   
   clv_df <- eventReactive(input$cal_clv,{

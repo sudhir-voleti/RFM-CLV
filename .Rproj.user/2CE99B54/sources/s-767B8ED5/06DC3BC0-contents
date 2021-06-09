@@ -1,0 +1,21 @@
+# Change histogram plot fill colors by groups
+ggplot(df1, aes(x=CLV, fill=R_Score, color=R_Score)) +
+  geom_histogram(position="identity")
+# Use semi-transparent fill
+p<-ggplot(df1, aes(x=log(CLV), fill="white", color=R_Score)) +
+  geom_histogram(position="identity", alpha=0.5,bins = 500)
+p
+# Add mean lines
+p+geom_vline(data=mu, aes(xintercept=grp.mean, color=sex),
+             linetype="dashed")
+
+df1$R_Score <- as.factor(df1$R_Score)
+
+
+plot_clv <- function(df1){
+  
+  
+}
+ggplot(df1, aes(x = CLV)) +
+  geom_histogram(fill = "darkblue", colour = "darkblue",bins = 100) +
+  facet_grid(M_Score ~ ., scales = "free")+ggtitle("Plot of length \n by dose") 

@@ -7,5 +7,6 @@ suppressPackageStartupMessages({
   if (!require('Amelia')){install.packages("Amelia")}; library("Amelia")
   if (!require('markdown')){install.packages("markdown")}; library("markdown")
   if (!require('shiny')){install.packages("shiny")}; library("shiny")
+  if (!require('ggplot2')){install.packages("ggplot2")}; library("ggplot2")
   
 })

@@ -3,7 +3,7 @@
     "path": "D:/R Projects/RFM-CLV/server.R",
     "project_path": "server.R",
     "type": "r_source",
-    "hash": "0",
+    "hash": "1765387470",
     "contents": "",
     "dirty": false,
     "created": 1623176432842.0,
@@ -13,15 +13,15 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "89,34",
-        "scrollLine": "81"
+        "cursorPosition": "151,17",
+        "scrollLine": "134"
     },
     "folds": "",
-    "lastKnownWriteTime": 1623250977,
+    "lastKnownWriteTime": 1623256354,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1623250977210,
+    "last_content_update": 1623256354375,
     "read_only": false,
     "read_only_alternatives": []
 }

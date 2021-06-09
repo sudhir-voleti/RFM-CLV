@@ -19,7 +19,16 @@ shinyUI(fluidPage(
                   actionButton("cal_rfm","Calculate RFM")
         ),
         conditionalPanel(condition = "input.tabselected==4",
-                         selectInput("pl_sel","Plot",choices = list("Recency, Frequency and Monetary (Histogram)"="hs",
+                         h5("Select CLV plot parameters"),
+                         numericInput("d_bin",
+                                      label = "No of bins",
+                                      min = 20,
+                                      max=300,
+                                      value=50),
+                         checkboxInput('fac',"Show Group By Plots"),
+                         uiOutput("fac_plot_ui"),
+                         hr(),
+                         selectInput("pl_sel","RFM Plots",choices = list("Recency, Frequency and Monetary (Histogram)"="hs",
                                                                     "Recencey vs Monetary (Scatter)" = "rm",
                                                                     "Frequency vs Monetary (Scatter)" = "fm",
                                                                     "Recency vs Freq vs Monetary (Heat Map)" = "hm",
@@ -64,20 +73,6 @@ shinyUI(fluidPage(
                      
                      
             ),
-            tabPanel("Plots",value=4,
-                     h4("Exploratory Data Analysis of RFM Table"),
-                     #h3("Heat Map"),
-                     plotOutput("rfm_plot"),
-                    # hr(),
-                     #p("Same as above in bar chart"),
-                     #plotOutput("rfm_bar"),
-                     #hr(),
-                     #plotOutput("bi")
-                     
-                     
-                     
-                     
-                     ),
             tabPanel("CLV",value=3,
                      h4("CLV Formula"),
                      img(src = "clv1.png"),
@@ -90,11 +85,18 @@ shinyUI(fluidPage(
                      h4("CLV DF"),
                      dataTableOutput("clv_df"),
                      hr()
-                    
-                     
-                    
             ),
-            
+            tabPanel("Plots",value=4,
+                     h4("CLV summary stats"),
+                     verbatimTextOutput("clv_sum"),
+                     h4("Distribution of CLV"),
+                     plotOutput("clv_plot"),
+                     hr(),
+                     h4("Exploratory Data Analysis of RFM Table"),
+                     plotOutput("rfm_plot")
+        
+                     
+            ),
             id = "tabselected"
         )
     )
