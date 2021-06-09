@@ -5,5 +5,7 @@ suppressPackageStartupMessages({
   if (!require('stats')){install.packages("stats")}; library("stats")
   if (!require('shiny')){install.packages("shiny")}; library("shiny")
   if (!require('Amelia')){install.packages("Amelia")}; library("Amelia")
+  if (!require('markdown')){install.packages("markdown")}; library("markdown")
+  if (!require('shiny')){install.packages("shiny")}; library("shiny")
   
 })

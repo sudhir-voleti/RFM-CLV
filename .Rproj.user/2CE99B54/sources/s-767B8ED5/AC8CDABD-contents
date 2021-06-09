@@ -1,2 +1,37 @@
 df_data <- fread("data\\retail txns data.csv")
 df_data <- fread("data/ecommData_rfm_clv.csv")
+
+#--temp--
+df_data1 <- as.data.frame(df_data)
+fac_cols <- c("CustomerID")#,"InvoiceNo")
+df_data1[fac_cols] <- lapply(df_data1[fac_cols], factor)
+custID_ui <- df_data1[,"CustomerID"]
+txnID_ui = df_data1[,'InvoiceNo']
+txn_amount_ui = as.numeric(df_data1[,'totRev'])
+date_format = "%m/%d/%Y %H:%M"
+txn_date_ui = as.Date(df_data1[,"InvoiceDate"], date_format)
+rfm_bins_num <- 4
+
+
+#----
+## UI inputs for RFM
+custID_ui = as.factor(df_data$CustomerID)  # from UI, make `as.factor()`
+print(custID_ui)
+txnID_ui = as.factor(df_data$InvoiceNo)  # from UI, make `as.factor()`
+
+txn_amount_ui = as.numeric(df_data$totRev)  # from UI, make `as.numeric()`
+
+date_format = "%m/%d/%Y %H:%M" # from UI. Tough but will ask folks do this. 
+
+txn_date_ui = as.Date(df_data$InvoiceDate, date_format)
+
+rfm_bins_num = 4 # from UI. Drop-down from 3 to 8
+
+system.time({ 
+  
+  df0_rfm = get_rfm_df(custID_ui=custID_ui, 
+                       txnID_ui = txnID_ui,
+                       txn_amount=txn_amount_ui, 
+                       txn_date_ui = txn_date_ui,
+                       rfm_bins_num=rfm_bins_num)
+})

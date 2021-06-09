@@ -12,10 +12,17 @@ shinyUI(fluidPage(
                   uiOutput("cid_ui"),
                   uiOutput('tx_id_ui'),
                   uiOutput('tx_dt_ui'),
-                  uiOutput('tx_amt_ui')
+                 # uiOutput("data_helper"),
+                  uiOutput('tx_dt_fmt_ui'),
+                  uiOutput('tx_amt_ui_1'),
+                  sliderInput("rfm_bin","RFM bin",min = 3,max = 8,value = 4,step = 1),
+                  actionButton("cal_rfm","Calculate RFM")
         ),
         conditionalPanel(condition = "input.tabselected==3",
-                         
+                   sliderInput("churn_thresh","Churn Threshold (ret_rate_it)",min = 0.5,max = 0.99,value = 0.75,step = 0.01),
+                   sliderInput("dis_rate","Discount Rate (discount_rate in formula)",min=0.01,max=0.20,value = 0.1,step=0.01),
+                   numericInput("pro_mar","Profit Margin ((gross_margin in formula)",min = 0,max=1,value = 0.1,step = 0.01),
+                   actionButton("cal_clv","Calculate CLV")
         )
         
     ),
@@ -32,16 +39,38 @@ shinyUI(fluidPage(
                     h4("Sample Dataset"),
                     dataTableOutput("samp_data"),
                     hr(),
-                    h4("Missingness Map"),
-                    plotOutput("miss_plot")
+                   # h4("Missingness Map"),
+                   # plotOutput("miss_plot")
+                    
+            ),
+            tabPanel("RFM", value=2,
+                     h4("Dimensions"),
+                     verbatimTextOutput("rfm_dim"),
+                     hr(),
+                     h4("Download Scores"),
+                     downloadButton("rfm_dwnld","Download"),
+                     hr(),
+                     h4("RFM DF"),
+                     dataTableOutput("rfm_df"),
+                     hr()
+                    
+                     
                      
             ),
-            tabPanel("RFM", value=3,
+            tabPanel("CLV",value=3,
+                     h4("CLV Formula"),
+                     img(src = "clv1.png"),
+                     hr(),
+                     h4("Dimensions"),
+                     verbatimTextOutput("clv_dim"),
+                     h4("Download Scores"),
+                     downloadButton("clv_dwnld","Download"),
+                     hr(),
+                     h4("CLV DF"),
+                     dataTableOutput("clv_df"),
+                     hr()
+                    
                      
-                     
-                     
-            ),
-            tabPanel("CLV",value=4,
                     
             ),
             id = "tabselected"

@@ -1,4 +1,6 @@
 options(shiny.maxRequestSize=50*1024^2)
+#observe_helpers(help_dir = "helper", withMathJax = TRUE)
+
 
 shinyServer(function(input, output,session) {
   
@@ -16,7 +18,7 @@ shinyServer(function(input, output,session) {
   
   output$cid_ui <- renderUI({
     req(input$file)
-      selectInput("cid","Select Customer ID",choices = cols(),multiple = FALSE)
+      selectizeInput("cid","Select Customer ID",choices = cols(),multiple = FALSE)
   })
   
   output$tx_id_ui <- renderUI({
@@ -32,8 +34,13 @@ shinyServer(function(input, output,session) {
     tx_dt_cols <- cols()[!cols() %in% remove]
     selectInput("tx_dt","Select Transaction Date",choices = tx_dt_cols,multiple = FALSE)
   })
+  
+  output$tx_dt_fmt_ui <- renderUI({
+    req(input$file)
+    textInput("dt_fmt",label = "Enter date format")
+  })
  
-  output$tx_amt_ui <- renderUI({
+  output$tx_amt_ui_1 <- renderUI({
     req(input$file)
     remove <- c(input$cid,input$tx_id,input$tx_dt)
     tx_amt_cols <- cols()[!cols() %in% remove]
@@ -53,15 +60,101 @@ shinyServer(function(input, output,session) {
   })
   
   # 3. missing plot
-  output$miss_plot <- renderPlot({
-    req(input$file)
-    Amelia::missmap(df_data())
-  })
+  # output$miss_plot <- renderPlot({
+  #   req(input$file)
+  #   Amelia::missmap(df_data())
+  # })
 
 #--------------------------2.RFM Tab------------------------------------#
+  # output$data_helper <- renderUI({
+  #   
+  #   helper(shiny_tag = "",
+  #          icon = "question",
+  #          colour = "green",
+  #          type = "markdown",
+  #          content = "diabetes"
+  #   )
+  # })
+  # 
+  rfm_df <- eventReactive(input$cal_rfm,{
+    progress <- Progress$new(session, min=1, max=10)
+    progress$set(value=3,"Preparing data")
+    Sys.sleep(3)
+    ## UI inputs for RFM
+    df_data1 <- as.data.frame(df_data())
+    fac_cols <- c(input$cid,input$tx_id)
+    df_data1[fac_cols] <- lapply(df_data1[fac_cols], factor)
+    custID_ui =  df_data1[,input$cid]  # from UI, make `as.factor()`
+    txnID_ui = df_data1[,input$tx_id]  # from UI, make `as.factor()`
+    txn_amount_ui = as.numeric(df_data1[,input$tx_amt])  # from UI, make `as.numeric()`
+   # date_format = "%m/%d/%Y %H:%M" # from UI. Tough but will ask folks do this. 
+    date_format <- input$dt_fmt
+    print(date_format)
+    txn_date_ui = as.Date(df_data1[,input$tx_dt], date_format)
+    
+    rfm_bins_num = input$rfm_bin # from UI. Drop-down from 3 to 8
+    progress$set(value=5,"Please wait.. calculating RFM scores")
+    df0_rfm = get_rfm_df(custID_ui=custID_ui, 
+                         txnID_ui = txnID_ui,
+                         txn_amount=txn_amount_ui, 
+                         txn_date_ui = txn_date_ui,
+                         rfm_bins_num=rfm_bins_num)
+    progress$set(value=10,"Scores calculated")
+    on.exit(progress$close())
+    df0_rfm
+  })
   
-  dfo_rfm <- eventReactive(input$apply,{
+  output$rfm_df <- renderDataTable({
+    req(input$file)
+    rfm_df()
+  })
+  
+  output$rfm_dim <- renderText({
+    req(input$file)
+    size <- dim(rfm_df())  
+    paste0("Dimensions of RFM Scores table are ",size[1]," (rows) "," X ",size[2]," (columns)")
+  
+  })
+  
+  output$rfm_dwnld <- downloadHandler(
+    filename = function() { paste(str_split(input$file$name,"\\.")[[1]][1],"_rfm_score.csv",collapse = " ") },
+    content = function(file) {
+      write.csv(rfm_df(), file,row.names=FALSE)
+    }
+  )
+
+  #---CLV Tab---#
+  
+  clv_df <- eventReactive(input$cal_clv,{
+    
+    df0_rfm <- rfm_df()
+    clv_df <- calc_clv(df0_rfm,
+                       churn_thresh_ui = input$churn_thresh, 
+                       discount_rate_ui = input$dis_rate, 
+                       profit_margin_ui = input$pro_mar
+                       )
+    
+    clv_df
+  })
+  
+  output$clv_df <- renderDataTable({
+    req(input$file)
+    clv_df()
+  })
+  
+  output$clv_dim <- renderText({
+    req(input$file)
+    size <- dim(clv_df())  
+    paste0("Dimensions of CLV Scores table are ",size[1]," (rows) "," X ",size[2]," (columns)")
     
   })
+  
+  output$clv_dwnld <- downloadHandler(
+    filename = function() { paste(str_split(input$file$name,"\\.")[[1]][1],"_clv_score.csv",collapse = " ") },
+    content = function(file) {
+      write.csv(clv_df(), file,row.names=FALSE)
+    }
+  )
+  
   
 })
