@@ -1,6 +1,7 @@
 options(shiny.maxRequestSize=50*1024^2)
 #observe_helpers(help_dir = "helper", withMathJax = TRUE)
 
+library(ggplot2)
 
 shinyServer(function(input, output,session) {
   
