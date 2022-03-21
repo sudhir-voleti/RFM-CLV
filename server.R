@@ -7,7 +7,7 @@ shinyServer(function(input, output,session) {
 #-----Data upload----#
   df_data <- reactive({
     req(input$file)
-    df = fread(input$file$datapath,header = TRUE)
+    df = data.table::fread(input$file$datapath,header = TRUE)
     
   })
   
