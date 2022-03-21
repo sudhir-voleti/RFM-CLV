@@ -1,4 +1,7 @@
 ## RFM builder func
+
+library(rfm)
+
 get_rfm_df <- function(custID_ui=custID_ui, txnID_ui = txnID_ui,
                        txn_amount_ui=txn_amount_ui, txn_date_ui = txn_date_ui,
                        rfm_bins_num=rfm_bins_num){
@@ -15,7 +18,7 @@ get_rfm_df <- function(custID_ui=custID_ui, txnID_ui = txnID_ui,
       freq = n_distinct(txnID_ui), 
       monetary= sum(txn_amount_ui)/n_distinct(txnID_ui)) %>% # 12.5s 
     # summary(df_RFM)
-    rfm_table_customer(.,
+    rfm::rfm_table_customer(.,
                        customer_id = custID_ui,
                        n_transactions = freq, 
                        recency_days = recency,
