@@ -1,13 +1,14 @@
 options(shiny.maxRequestSize=50*1024^2)
 #observe_helpers(help_dir = "helper", withMathJax = TRUE)
 
+library(ggplot2)
 
 shinyServer(function(input, output,session) {
   
 #-----Data upload----#
   df_data <- reactive({
     req(input$file)
-    df = fread(input$file$datapath,header = TRUE)
+    df = data.table::fread(input$file$datapath,header = TRUE)
     
   })
   
